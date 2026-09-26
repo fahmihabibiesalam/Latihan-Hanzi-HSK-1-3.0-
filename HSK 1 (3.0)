@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HSK 1 Quiz — Hanzi, Pinyin & Arti</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:18px;
+    background:linear-gradient(160deg,#eef2ff 0%,#f8fafc 45%,#fef2f2 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+    color:#1e293b;
+  }
+  .app{width:100%;max-width:600px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  h1{font-size:19px;margin:0;letter-spacing:.3px}
+  h1 span{color:#dc2626}
+  .stats{display:flex;gap:14px;font-size:13px;color:#475569}
+  .stats b{color:#0f172a}
+  .modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .modes button{
+    flex:1 1 auto;padding:9px 10px;border-radius:10px;border:1px solid #e2e8f0;
+    background:#fff;color:#475569;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:.15s;white-space:nowrap;
+  }
+  .modes button:hover{border-color:#c7d2fe}
+  .modes button.active{background:#4f46e5;border-color:#4f46e5;color:#fff;box-shadow:0 6px 16px -6px #4f46e5}
+  .card{
+    background:#fff;border-radius:20px;padding:22px 20px 18px;
+    box-shadow:0 20px 45px -20px rgba(15,23,42,.25),0 2px 8px rgba(15,23,42,.05);
+    border:1px solid #eef2f7;
+  }
+  .prompt{
+    text-align:center;font-weight:700;line-height:1.25;
+    font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  .prompt.hanzi{font-size:clamp(54px,17vw,84px);letter-spacing:4px}
+  .prompt.pinyin{font-size:clamp(34px,11vw,52px);color:#4f46e5;letter-spacing:1px;font-family:inherit}
+  .sub{text-align:center;color:#94a3b8;font-size:13.5px;margin:8px 0 20px;min-height:19px}
+  .options{display:grid;gap:9px}
+  .option{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+    padding:13px 15px;border-radius:13px;border:1.5px solid #e6eaf2;background:#fbfcfe;
+    font-size:16px;color:#1e293b;font-weight:500;transition:.15s;font-family:inherit;
+  }
+  .option:hover:not(:disabled){border-color:#a5b4fc;background:#f5f7ff;transform:translateY(-1px)}
+  .option:disabled{cursor:default}
+  .option .key{
+    flex:0 0 24px;height:24px;border-radius:7px;background:#eef2ff;color:#6366f1;
+    font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+  .option.hanzi-opt .txt{font-size:26px;font-family:"Noto Sans SC","PingFang SC",sans-serif}
+  .option.correct{border-color:#10b981;background:#ecfdf5;color:#065f46}
+  .option.correct .key{background:#10b981;color:#fff}
+  .option.wrong{border-color:#ef4444;background:#fef2f2;color:#991b1b}
+  .option.wrong .key{background:#ef4444;color:#fff}
+  .feedback{margin-top:16px;padding:0 14px;border-radius:13px;max-height:0;overflow:hidden;
+    opacity:0;transition:.25s ease;border:1.5px solid transparent}
+  .feedback.show{max-height:220px;opacity:1;padding:13px 14px}
+  .feedback.ok{background:#ecfdf5;border-color:#a7f3d0}
+  .feedback.no{background:#fef2f2;border-color:#fecaca}
+  .fb-title{font-size:13px;font-weight:700;margin-bottom:7px}
+  .feedback.ok .fb-title{color:#047857}
+  .feedback.no .fb-title{color:#b91c1c}
+  .fb-detail{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .d-hz{font-size:27px;font-weight:700;font-family:"Noto Sans SC","PingFang SC",sans-serif}
+  .d-py{font-size:16px;color:#4f46e5;font-weight:600}
+  .d-pos{font-size:11.5px;color:#64748b;background:#f1f5f9;padding:2px 7px;border-radius:6px}
+  .d-en{font-size:14px;color:#334155}
+  .next{
+    display:block;width:100%;margin-top:14px;padding:14px;border-radius:13px;border:none;
+    background:#4f46e5;color:#fff;font-size:15.5px;font-weight:700;cursor:pointer;
+    transition:.15s;font-family:inherit;
+  }
+  .next:hover{background:#4338ca;transform:translateY(-1px)}
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;
+    font-size:12px;color:#94a3b8}
+  .footer button{background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;
+    text-decoration:underline;font-family:inherit}
+  .footer button:hover{color:#4f46e5}
+  @media(max-width:420px){ .card{padding:18px 15px 15px} .stats{gap:10px;font-size:12px} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>HSK 1 <span>Quiz</span></h1>
+    <div class="stats">
+      <span>Skor <b id="score">0</b>/<b id="total">0</b></span>
+      <span>Akurasi <b id="acc">–</b></span>
+      <span>Streak <b id="streak">0</b></span>
+    </div>
+  </header>
+
+  <div class="modes" id="modes">
+    <button data-mode="pinyin" class="active">Hanzi → Pinyin</button>
+    <button data-mode="meaning">Hanzi → Arti</button>
+    <button data-mode="hanzi">Pinyin+Arti → Hanzi</button>
+    <button data-mode="mix">🎲 Campur</button>
+  </div>
+
+  <div class="card">
+    <div class="prompt hanzi" id="prompt">爱</div>
+    <div class="sub" id="sub">Bagaimana cara membacanya (pinyin)?</div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next" id="next" hidden>Lanjut →</button>
+  </div>
+
+  <div class="footer">
+    <span id="counter">Soal ke-0</span>
+    <button id="reset">Ulangi dari awal</button>
+  </div>
+</div>
+
+<script>
+/* ====== DATA: 300 kosakata HSK 1 ====== */
+const RAW = [
+["爱","ài","v.","to love"],
+["八","bā","num.","eight"],
+["爸爸","bàba","n.","father"],
+["吧","ba","part.","makes a suggestion (e.g. Let's ...)"],
+["白天","báitiān","n.","daytime"],
+["百","bǎi","num.","hundred"],
+["半","bàn","adv./num.","half"],
+["包子","bāozi","n.","bao zi (steamed stuffed bun)"],
+["杯子","bēizi","n.","cup; glass; mug"],
+["本","běn","mw.","root; measure word for books"],
+["边","biān","n./suf.","side, edge, border, margin"],
+["病","bìng","n./v.","illness, disease, sickness"],
+["不","bù","adv.","not; no"],
+["不客气","bú kèqi","phr.","you're welcome"],
+["不要","bú yào","adv.","don't!"],
+["菜","cài","n.","vegetable; dish"],
+["茶","chá","n.","tea"],
+["唱","chàng","v.","to sing; to chant"],
+["超市","chāoshì","n.","supermarket"],
+["车","chē","n.","vehicle, wheeled conveyance"],
+["吃","chī","v.","to eat"],
+["出租车","chūzūchē","n.","taxi"],
+["穿","chuān","v.","to wear; to put on"],
+["打电话","dǎ diànhuà","phr.","to make a telephone call"],
+["大","dà","adj.","big"],
+["大家","dàjiā","pron.","everybody"],
+["大学","dàxué","n.","university"],
+["大学生","dàxuéshēng","n.","university student"],
+["到","dào","v.","to arrive; to get to"],
+["的","de","part.","of"],
+["第","dì","pref.","sequence prefix (ordinal number marker)"],
+["弟弟","dìdi","n.","younger brother"],
+["点","diǎn","n./mw.","o'clock; spot; dot"],
+["店","diàn","n.","shop, store, inn"],
+["电话","diànhuà","n.","telephone"],
+["电脑","diànnǎo","n.","computer"],
+["电视","diànshì","n.","TV"],
+["电影","diànyǐng","n.","film; movie"],
+["电影院","diànyǐngyuàn","n.","cinema; movie theater"],
+["东西","dōngxi","n.","thing"],
+["都","dōu","adv.","both; all"],
+["读","dú","v.","to read aloud"],
+["读书","dú shū","v.","to read a book"],
+["对","duì","v./adj.","correct; right"],
+["对不起","duìbuqǐ","v.","sorry"],
+["多","duō","adj./adv.","many; much; more than; how"],
+["多少","duōshao","pron.","how much / how many?"],
+["儿子","érzi","n.","son"],
+["二","èr","num.","two"],
+["饭","fàn","n.","cooked rice or food in general"],
+["饭店","fàndiàn","n.","restaurant"],
+["房间","fángjiān","n.","room"],
+["非常","fēicháng","adv.","extremely"],
+["飞机","fēijī","n.","plane"],
+["分","fēn","n./v./mw.","minute; point; part; to divide"],
+["分钟","fēnzhōng","mw.","minute"],
+["高兴","gāoxìng","adj.","pleased; happy"],
+["歌","gē","n.","song"],
+["哥哥","gēge","n.","elder brother"],
+["个","gè","mw.","individual; general measure word"],
+["给","gěi","v./prep.","to give"],
+["公司","gōngsī","n.","company; office"],
+["工作","gōngzuò","n./v.","job; work"],
+["狗","gǒu","n.","dog"],
+["贵","guì","adj.","expensive"],
+["国","guó","n.","country, nation, state"],
+["还","hái","adv.","still; also"],
+["孩子","háizi","n.","child; children"],
+["汉语","Hànyǔ","n.","Standard Chinese language"],
+["汉字","Hànzì","n.","Chinese character"],
+["好","hǎo","v./adj./adv.","good"],
+["好吃","hǎochī","adj.","delicious"],
+["好看","hǎokàn","adj.","good-looking"],
+["好听","hǎotīng","adj.","pleasant to hear"],
+["好玩儿","hǎowánr","adj.","fun; interesting"],
+["号","hào","n./mw.","number; date; size"],
+["喝","hē","v.","to drink"],
+["和","hé","prep./conj.","and"],
+["很","hěn","adv.","very"],
+["后","hòu","n.","behind, after"],
+["回","huí","v./mw.","to return"],
+["会","huì","v.","to know how to; can"],
+["火车","huǒchē","n.","train"],
+["鸡蛋","jīdàn","n.","(chicken) egg"],
+["几","jǐ","pron./num.","how many? (expecting a small number)"],
+["家","jiā","n./mw./suf.","family; home"],
+["家人","jiārén","n.","family member"],
+["见","jiàn","v.","to see, to perceive with the eyes"],
+["件","jiàn","mw.","item; measure word for items of clothing"],
+["饺子","jiǎozi","n.","dumpling"],
+["叫","jiào","v./prep.","to call; to be called; to ask"],
+["姐姐","jiějie","n.","elder sister"],
+["今年","jīnnián","n.","this year"],
+["今天","jīntiān","n.","today"],
+["九","jiǔ","num.","nine"],
+["觉得","juéde","v.","to think; feel"],
+["开","kāi","v.","to switch on; open"],
+["开车","kāichē","v.","to drive a car"],
+["看","kàn","v.","to see; to read; to watch; to look at"],
+["看病","kànbìng","v.","to visit a doctor"],
+["看见","kànjiàn","v.","to see"],
+["可以","kěyǐ","v./adj.","can; may"],
+["课","kè","n.","lesson"],
+["口","kǒu","n./mw.","mouth; measure word for family members"],
+["块","kuài","mw.","lump; piece"],
+["来","lái","v.","to come"],
+["老师","lǎoshī","n.","teacher"],
+["了","le","part.","particle (makes an exclamation)"],
+["冷","lěng","adj.","cold"],
+["里","lǐ","n.","in; inside"],
+["两","liǎng","num.","two (of something)"],
+["零","líng","num.","zero"],
+["六","liù","num.","six"],
+["妈妈","māma","n.","mother"],
+["吗","ma","part.","makes a yes/no question"],
+["买","mǎi","v.","to buy"],
+["卖","mài","v.","to sell"],
+["忙","máng","v./adj.","busy"],
+["猫","māo","n.","cat"],
+["没关系","méi guānxi","phr.","no problem"],
+["没事","méi shì","v.","it's nothing; no problem"],
+["没有","méiyǒu","v./adv.","don't have"],
+["妹妹","mèimei","n.","younger sister"],
+["们","men","suf.","plural suffix for pronouns and nouns referring to people"],
+["米饭","mǐfàn","n.","rice (cooked; boiled)"],
+["面包","miànbāo","n.","bread"],
+["面条儿","miàntiáor","n.","noodles"],
+["明年","míngnián","n.","next year"],
+["明天","míngtiān","n.","tomorrow"],
+["名字","míngzi","n.","given name"],
+["哪","nǎ","pron.","which?"],
+["哪个","nǎge","pron.","which; which one"],
+["哪里","nǎlǐ","pron.","where?"],
+["哪儿","nǎr","pron.","where?"],
+["哪些","nǎxiē","pron.","which ones?"],
+["那","nà","pron./conj.","that; those"],
+["那边","nàbiān","pron.","over there"],
+["那个","nàge","pron.","that; that one"],
+["那里","nàlǐ","pron.","there; that place"],
+["那儿","nàr","pron.","there"],
+["那些","nàxiē","pron.","those"],
+["男","nán","adj.","male"],
+["男朋友","nánpéngyou","n.","boyfriend"],
+["呢","ne","part.","returns / forwards a question"],
+["能","néng","v.","to be able to; can"],
+["你","nǐ","pron.","you"],
+["你好","nǐhǎo","interj.","hello; hi"],
+["你们","nǐmen","pron.","you (plural)"],
+["年","nián","n./mw.","year"],
+["您","nín","pron.","you (polite form)"],
+["牛奶","niúnǎi","n.","milk"],
+["女","nǚ","adj.","female"],
+["女儿","nǚ'ér","n.","daughter"],
+["女朋友","nǚpéngyou","n.","girlfriend"],
+["女士","nǚshì","n.","lady; Madam; Miss"],
+["朋友","péngyou","n.","friend"],
+["便宜","piányi","adj.","cheap"],
+["漂亮","piàoliang","adj.","beautiful"],
+["苹果","píngguǒ","n.","apple"],
+["七","qī","num.","seven"],
+["起床","qǐchuáng","v.","get up (out of bed)"],
+["千","qiān","num.","thousand"],
+["前","qián","n.","front, forward, ahead, before"],
+["钱","qián","n.","money"],
+["请","qǐng","v.","to invite; please"],
+["请问","qǐngwèn","v.","Excuse me, may I ask...?"],
+["去","qù","v.","to go"],
+["去年","qùnián","n.","last year"],
+["热","rè","adj.","hot"],
+["人","rén","n.","person; people"],
+["认识","rènshi","v.","to know (be familiar with)"],
+["日","rì","n./mw.","day (date); sun"],
+["三","sān","num.","three"],
+["商店","shāngdiàn","n.","shop"],
+["上","shàng","n./v.","up; above; on; previous"],
+["上班","shàngbān","v.","start work"],
+["上课","shàngkè","v.","to go to class"],
+["上午","shàngwǔ","n.","morning"],
+["上学","shàngxué","v.","to go to school"],
+["少","shǎo","v./adj.","few"],
+["谁","shéi","pron.","who?"],
+["什么","shénme","pron.","what?"],
+["生病","shēngbìng","v.","ill; sick; unwell"],
+["十","shí","num.","ten"],
+["时候","shíhou","n.","(duration of) time"],
+["时间","shíjiān","n.","time"],
+["事","shì","n.","matter, affair, thing"],
+["是","shì","v.","to be"],
+["手机","shǒujī","n.","mobile phone"],
+["书","shū","n.","book"],
+["书店","shūdiàn","n.","bookstore"],
+["水","shuǐ","n.","water"],
+["水果","shuǐguǒ","n.","fruit"],
+["睡","shuì","v.","to sleep"],
+["睡觉","shuìjiào","v.","to go to bed; to sleep"],
+["说","shuō","v.","to speak"],
+["说话","shuōhuà","v.","to speak"],
+["四","sì","num.","four"],
+["岁","suì","mw.","year (of age)"],
+["他","tā","pron.","he; him"],
+["它","tā","pron.","it"],
+["她","tā","pron.","she; her"],
+["他们","tāmen","pron.","they"],
+["它们","tāmen","pron.","they (for inanimate objects)"],
+["她们","tāmen","pron.","they (female)"],
+["太","tài","adv.","too; very"],
+["天","tiān","n./mw.","sky, heaven; day"],
+["天气","tiānqì","n.","weather"],
+["听","tīng","v.","to listen; hear"],
+["听见","tīngjiàn","v.","to hear"],
+["同学","tóngxué","n.","schoolmate; classmate"],
+["外","wài","n.","outside"],
+["外边","wàibian","n.","outside"],
+["玩","wán","v.","to play"],
+["晚","wǎn","adj.","evening, night, late"],
+["晚饭","wǎnfàn","n.","evening meal"],
+["晚上","wǎnshang","n.","evening"],
+["喂","wèi","interj.","hello"],
+["问","wèn","v.","to ask"],
+["问题","wèntí","n.","problem; question"],
+["我","wǒ","pron.","I; me"],
+["我们","wǒmen","pron.","we; us"],
+["五","wǔ","num.","five"],
+["午饭","wǔfàn","n.","lunch"],
+["喜欢","xǐhuan","v.","to like"],
+["下","xià","n./v./mw.","down; below"],
+["下雨","xiàyǔ","v.","to rain"],
+["下班","xiàbān","v.","to finish work"],
+["下课","xiàkè","v.","to finish class"],
+["下午","xiàwǔ","n.","afternoon"],
+["先生","xiānsheng","n.","Mr; Sir"],
+["现在","xiànzài","n.","now"],
+["想","xiǎng","v.","to want; to think"],
+["小","xiǎo","adj./pref.","small"],
+["小朋友","xiǎopéngyǒu","n.","child"],
+["小时","xiǎoshí","n.","hour"],
+["小学","xiǎoxué","n.","elementary school; primary school"],
+["小学生","xiǎoxuéshēng","n.","primary school student"],
+["些","xiē","mw.","some"],
+["写","xiě","v.","to write"],
+["谢谢","xièxie","v.","thank you"],
+["新","xīn","adj.","new"],
+["星期","xīngqī","n.","week"],
+["星期日","xīngqīrì","n.","Sunday"],
+["星期天","xīngqītiān","n.","Sunday"],
+["休息","xiūxi","v.","to rest"],
+["学","xué","v.","to study, to learn"],
+["学生","xuésheng","n.","student"],
+["学习","xuéxí","v.","to learn; to study"],
+["学校","xuéxiào","n.","school"],
+["雪","xuě","n.","snow"],
+["要","yào","v.","want; be going to; ask for"],
+["也","yě","adv.","too; also"],
+["一","yī","num.","one"],
+["衣服","yīfu","n.","clothes"],
+["医生","yīshēng","n.","doctor"],
+["医院","yīyuàn","n.","hospital"],
+["一半","yībàn","num.","half"],
+["一下","yīxià","adv./mw.","(used after a verb) give something a go"],
+["椅子","yǐzi","n.","chair"],
+["一点儿","yìdiǎnr","num./mw.","a bit"],
+["一些","yìxiē","num./mw.","some"],
+["有","yǒu","v.","to have"],
+["有的","yǒude","pron.","(there are) some (who are...)"],
+["有点儿","yǒudiǎnr","adv.","slightly"],
+["有些","yǒuxiē","adv./pron.","some"],
+["雨","yǔ","n.","rain"],
+["元","yuán","mw.","yuan (unit of Chinese currency); dollar"],
+["月","yuè","n.","month; moon"],
+["再","zài","adv.","again"],
+["在","zài","v./adv./prep.","to be at; in; at; on"],
+["再见","zàijiàn","v.","goodbye"],
+["早","zǎo","adj.","early; morning"],
+["早饭","zǎofàn","n.","breakfast"],
+["早上","zǎoshang","n.","early morning"],
+["怎么","zěnme","pron.","how?"],
+["怎么样","zěnmeyàng","pron.","how about it?"],
+["找","zhǎo","v.","to find; to look for"],
+["这","zhè","pron.","this"],
+["这边","zhèbiān","pron.","this side"],
+["这个","zhège","pron.","this; this one"],
+["这里","zhèlǐ","pron.","here"],
+["这儿","zhèr","pron.","here"],
+["这些","zhèxiē","pron.","these"],
+["真","zhēn","adj./adv.","real; so (+ adjective)"],
+["正在","zhèngzài","adv.","currently; in the process of"],
+["只","zhī","mw.","measure word for small animals"],
+["知道","zhīdào","v.","to know; realise; be aware of"],
+["中国","Zhōngguó","n.","China"],
+["中文","Zhōngwén","n.","Chinese (written language)"],
+["中午","zhōngwǔ","n.","midday"],
+["中学","zhōngxué","n.","middle school"],
+["中学生","zhōngxuéshēng","n.","middle-school student"],
+["住","zhù","v.","to live; stay (a number of nights)"],
+["桌子","zhuōzi","n.","table"],
+["字","zì","n.","(Chinese) character"],
+["昨天","zuótiān","n.","yesterday"],
+["坐","zuò","v.","to sit"],
+["做","zuò","v.","to do; to be; become (an occupation)"],
+["做饭","zuòfàn","v.","to prepare a meal"]
+];
+
+/* ====== SETUP ====== */
+const WORDS = RAW.map((r,i)=>({id:i, w:r[0], p:r[1], pos:r[2], e:r[3]}));
+const $ = s => document.querySelector(s);
+const promptEl = $('#prompt'), subEl = $('#sub'), optionsEl = $('#options');
+const feedbackEl = $('#feedback'), nextBtn = $('#next');
+const scoreEl = $('#score'), totalEl = $('#total'), accEl = $('#acc'), streakEl = $('#streak');
+const counterEl = $('#counter');
+
+let mode = 'pinyin';
+let queue = [];
+let cur = null;
+let answered = false;
+let score = 0, total = 0, streak = 0, bestStreak = 0;
+let mistakes = [];
+
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+/* ====== GAME ====== */
+function nextQuestion(){
+  if(queue.length === 0) queue = shuffle(WORDS.slice());
+  const target = queue.pop();
+  const qmode = mode === 'mix' ? pick(['pinyin','meaning','hanzi']) : mode;
+
+  const answerOf = w => qmode === 'pinyin' ? w.p : qmode === 'meaning' ? w.e : w.w;
+  const answer = answerOf(target);
+
+  const confusable = w => qmode === 'hanzi'
+      ? (w.p === target.p || w.e === target.e)
+      : answerOf(w) === answer;
+
+  const others = shuffle(WORDS.filter(w => w.id !== target.id && !confusable(w))).slice(0,3);
+  const options = shuffle([target, ...others]);
+
+  cur = { target, qmode, options };
+  answered = false;
+  render();
+}
+
+function label(w, qmode){
+  return qmode === 'pinyin' ? w.p : qmode === 'meaning' ? w.e : w.w;
+}
+
+function render(){
+  const { target, qmode, options } = cur;
+  feedbackEl.className = 'feedback';
+  feedbackEl.innerHTML = '';
+  nextBtn.hidden = true;
+
+  if(qmode === 'pinyin'){
+    promptEl.textContent = target.w;
+    promptEl.className = 'prompt hanzi';
+    subEl.textContent = 'Bagaimana cara membacanya (pinyin)?';
+  } else if(qmode === 'meaning'){
+    promptEl.textContent = target.w;
+    promptEl.className = 'prompt hanzi';
+    subEl.textContent = 'Apa arti kata ini dalam bahasa Inggris?';
+  } else {
+    promptEl.textContent = target.p;
+    promptEl.className = 'prompt pinyin';
+    subEl.textContent = target.e + ' — pilih hanzi yang tepat';
+  }
+
+  optionsEl.innerHTML = '';
+  options.forEach((w, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option' + (qmode === 'hanzi' ? ' hanzi-opt' : '');
+    btn.innerHTML = '<span class="key">' + (i+1) + '</span><span class="txt"></span>';
+    btn.querySelector('.txt').textContent = label(w, qmode);
+    btn.addEventListener('click', () => choose(w, btn));
+    optionsEl.appendChild(btn);
+  });
+}
+
+function choose(chosen, btn){
+  if(answered) return;
+  answered = true;
+
+  const correct = chosen.id === cur.target.id;
+  total++;
+  if(correct){ score++; streak++; bestStreak = Math.max(bestStreak, streak); }
+  else { streak = 0; mistakes.push(cur.target); }
+
+  Array.from(optionsEl.children).forEach((b, i) => {
+    const w = cur.options[i];
+    b.disabled = true;
+    if(w.id === cur.target.id) b.classList.add('correct');
+    else if(b === btn) b.classList.add('wrong');
+  });
+
+  const t = cur.target;
+  feedbackEl.className = 'feedback show ' + (correct ? 'ok' : 'no');
+  feedbackEl.innerHTML =
+    '<div class="fb-title">' + (correct ? '✓ Benar!' : '✗ Kurang tepat') + '</div>' +
+    '<div class="fb-detail">' +
+      '<span class="d-hz"></span>' +
+      '<span class="d-py"></span>' +
+      '<span class="d-pos"></span>' +
+      '<span class="d-en"></span>' +
+    '</div>';
+  feedbackEl.querySelector('.d-hz').textContent = t.w;
+  feedbackEl.querySelector('.d-py').textContent = t.p;
+  feedbackEl.querySelector('.d-pos').textContent = t.pos;
+  feedbackEl.querySelector('.d-en').textContent = t.e;
+
+  updateStats();
+  nextBtn.hidden = false;
+  nextBtn.focus({ preventScroll: true });
+}
+
+function updateStats(){
+  scoreEl.textContent = score;
+  totalEl.textContent = total;
+  accEl.textContent = total ? Math.round(score / total * 100) + '%' : '–';
+  streakEl.textContent = streak;
+  counterEl.textContent = 'Soal ke-' + total + ' · Terbaik: ' + bestStreak + ' streak';
+}
+
+function resetSession(){
+  queue = [];
+  score = 0; total = 0; streak = 0; bestStreak = 0; mistakes = [];
+  updateStats();
+  nextQuestion();
+}
+
+/* ====== EVENTS ====== */
+nextBtn.addEventListener('click', nextQuestion);
+
+document.querySelectorAll('#modes button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#modes button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    mode = b.dataset.mode;
+    resetSession();
+  });
+});
+
+$('#reset').addEventListener('click', resetSession);
+
+document.addEventListener('keydown', e => {
+  if(!answered && ['1','2','3','4'].includes(e.key)){
+    const btn = optionsEl.children[Number(e.key) - 1];
+    if(btn && !btn.disabled) btn.click();
+  } else if(answered && (e.key === 'Enter' || e.key === ' ')){
+    e.preventDefault();
+    nextQuestion();
+  }
+});
+
+/* start */
+resetSession();
+</script>
+</body>
+</html>
